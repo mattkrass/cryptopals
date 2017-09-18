@@ -1,5 +1,26 @@
-#!/usr/bin/env python3.6
+import base64
 from array import array
+
+def hexStringToBase64Bytes(hexString):
+    return base64.b64encode(bytes.fromhex(hexString))
+
+def hexStringToBase64String(hexString):
+    return hexStringToBase64Bytes(hexString).decode('utf-8')
+
+def xorByteStrings(bytesA, bytesB):
+    result = array('B')
+    for a, b in zip(bytesA, bytesB):
+        result.append(a ^ b)
+    return result.tobytes()
+
+def xorHexStrings(hexA, hexB):
+    return xorByteStrings(bytes.fromhex(hexA), bytes.fromhex(hexB)).hex()
+
+def singleByteXor(bytesA, key):
+    result = array('B')
+    for i in bytesA:
+        result.append(i ^ key)
+    return result.tobytes()
 
 def freqScore(s):
     freqMap = {
@@ -28,7 +49,8 @@ def freqScore(s):
         'w': 0.02360,
         'x': 0.00150,
         'y': 0.01974,
-        'z': 0.00074
+        'z': 0.00074,
+        ' ': 0.19181
     }
 
     score = 0.0
@@ -46,30 +68,16 @@ def findXorKey(encStr):
     highestScore = -1
     for c in range(0, 255):
         score = 0
-        result = array('B')
-        for i in encStr:
-            r = (i ^ c)
-            result.append(r)
-        score = freqScore(result.tobytes())
+        result = singleByteXor(encStr, c)
+        score = freqScore(result)
         if score > highestScore:
             highestScore = score
-            finalResult = result.tobytes()
+            finalResult = result
             finalKey = c
     return (finalKey, highestScore, finalResult,)
 
-finalResult = b''
-finalKey = ''
-highestScore = 0
-
-with open('4.txt', 'r') as inFile:
-    fileLines = inFile.read().split('\n')
-    for l in fileLines:
-        key,  score, result = findXorKey(bytes.fromhex(l))
-        if score > highestScore:
-            print('New high score %f beats %f: %s' % (score, highestScore, result,))
-            highestScore = score
-            finalResult = result
-            finalKey = key
-
-print('Key: "%s" Score: %d Str: "%s"' % (finalKey, highestScore, finalResult,))
-
+def test(a, b):
+    if a == b:
+        print('\033[0;32m[ PASS! ]\033[0;0m')
+    else:
+        print('\033[1;31m[ FAIL! ]\033[0;0m')
