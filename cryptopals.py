@@ -22,6 +22,13 @@ def singleByteXor(bytesA, key):
         result.append(i ^ key)
     return result.tobytes()
 
+def repeatingXor(bytesA, bytesK):
+    keyLen = len(bytesK)
+    result = array('B')
+    for i in range(len(bytesA)):
+        result.append(bytesA[i] ^ bytesK[(i % keyLen)])
+    return result.tobytes()
+
 def freqScore(s):
     freqMap = {
         'a': 0.08167,
