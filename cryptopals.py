@@ -73,10 +73,11 @@ def findXorKey(encStr):
     finalResult = b''
     finalKey = ''
     highestScore = -1
-    for c in range(0, 255):
+    for c in range(0, 127):
         score = 0
         result = singleByteXor(encStr, c)
         score = freqScore(result)
+        print('key = %c, score = %f' % (c, score,))
         if score > highestScore:
             highestScore = score
             finalResult = result
@@ -88,3 +89,49 @@ def test(a, b):
         print('\033[0;32m[ PASS! ]\033[0;0m')
     else:
         print('\033[1;31m[ FAIL! ]\033[0;0m')
+
+def getHammingDistance(bytesA, bytesB):
+    if len(bytesA) != len(bytesB): return -1
+    distance = 0
+
+    for i, j in zip(bytesA, bytesB):
+        bits = i ^ j
+        for k in range(8):
+            if bits & 1: distance = distance + 1
+            bits = bits >> 1;
+    return distance
+
+def predictKeySize(bytesA, minKeySize, maxKeySize):
+    lowestDistance = 9.0
+    keySize = 0
+    for i in range(minKeySize, maxKeySize+1):
+        chunkA = bytesA[0:i]
+        chunkB = bytesA[i:2*i]
+        chunkC = bytesA[2*i:3*i]
+        chunkD = bytesA[3*i:4*i]
+        if len(chunkA) != i: break
+        if len(chunkB) != i: break
+        if len(chunkC) != i: break
+        if len(chunkD) != i: break
+        distAB = (float)(getHammingDistance(chunkA, chunkB)) / i
+        distCD = (float)(getHammingDistance(chunkC, chunkD)) / i
+        distance = (distAB + distCD) / 2
+        if 0 > distance: break
+        print('key size %d scores %f' % (i, distance,))
+        if distance < lowestDistance:
+            print('new winning key size: %d' % (i,))
+            lowestDistance = distance
+            keySize = i
+    return keySize
+
+def breakRepeatingKeyXor(data, minKeySize=2, maxKeySize=40):
+    keySize = 6#predictKeySize(data, minKeySize, maxKeySize)
+    key = array('B')
+    blockInterval = int(len(data) / keySize)
+    print('l = %s, k = %s, i = %s' % (len(data), keySize, blockInterval,))
+    for i in range(keySize):
+        block = data[i::blockInterval]
+        print('block size: %d (%d)' % (len(block), keySize,))
+        keyByte, keyScore, keyResult = findXorKey(block)
+        key.append(keyByte)
+    return key.tobytes()
