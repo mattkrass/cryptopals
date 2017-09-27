@@ -62,22 +62,19 @@ def freqScore(s):
 
     score = 0.0
     for i in s.lower():
-        if 32 > i and i != 10: # non-printable, scrub out
-            return 0.0
         i = chr(i)
         if i in freqMap:
-            score = score + freqMap[i]
+            score += freqMap[i]
     return score
 
 def findXorKey(encStr):
     finalResult = b''
     finalKey = ''
     highestScore = -1
-    for c in range(0, 127):
+    for c in range(0, 256):
         score = 0
         result = singleByteXor(encStr, c)
         score = freqScore(result)
-        print('key = %c, score = %f' % (c, score,))
         if score > highestScore:
             highestScore = score
             finalResult = result
