@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3.5
 import cryptopals
 import base64
 import itertools
@@ -40,4 +40,8 @@ print('DEC: %s' % (breakRepeatingXor(testOut, 6),))
 # read in 6.txt
 with open('6.txt', 'r') as inFile:
     b64data = inFile.read()
-    ciperdata = base64.b64decode(b64data)
+    cipherdata = base64.b64decode(b64data)
+    keySize = predictKeySize(cipherdata)
+    print('KEY: %d' % (keySize,))
+    print('KEY: %d' % (cryptopals.predictKeySize(cipherdata, 2, 40),))
+    print('DEC: %s' % (breakRepeatingXor(cipherdata, keySize).decode('utf-8'),))
