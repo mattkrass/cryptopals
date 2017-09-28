@@ -1,4 +1,5 @@
 import base64
+import itertools
 from array import array
 
 def hexStringToBase64Bytes(hexString):
@@ -98,37 +99,21 @@ def getHammingDistance(bytesA, bytesB):
             bits = bits >> 1;
     return distance
 
-def predictKeySize(bytesA, minKeySize, maxKeySize):
-    lowestDistance = 9.0
-    keySize = 0
-    for i in range(minKeySize, maxKeySize+1):
-        chunkA = bytesA[0:i]
-        chunkB = bytesA[i:2*i]
-        chunkC = bytesA[2*i:3*i]
-        chunkD = bytesA[3*i:4*i]
-        if len(chunkA) != i: break
-        if len(chunkB) != i: break
-        if len(chunkC) != i: break
-        if len(chunkD) != i: break
-        distAB = (float)(getHammingDistance(chunkA, chunkB)) / i
-        distCD = (float)(getHammingDistance(chunkC, chunkD)) / i
-        distance = (distAB + distCD) / 2
-        if 0 > distance: break
-        print('key size %d scores %f' % (i, distance,))
-        if distance < lowestDistance:
-            print('new winning key size: %d' % (i,))
-            lowestDistance = distance
-            keySize = i
-    return keySize
+def averageNormalizedHammingDistance(data, keySize):
+    blocks = [ data[i:i+keySize] for i in range(0, len(data), keySize) ][0:4]
+    pairs = list(itertools.combinations(blocks, 2))
+    scores = [ (getHammingDistance(p[0], p[1]) / float(keySize)) for p in pairs ][0:6]
+    return sum(scores) / len(scores)
+
+def predictKeySize(data, minSize=2, maxSize=40):
+    return min(range(minSize, maxSize + 1), key=lambda k: averageNormalizedHammingDistance(data, k))
 
 def breakRepeatingKeyXor(data, minKeySize=2, maxKeySize=40):
-    keySize = 6#predictKeySize(data, minKeySize, maxKeySize)
+    keySize = predictKeySize(data, minKeySize, maxKeySize)
     key = array('B')
-    blockInterval = int(len(data) / keySize)
-    print('l = %s, k = %s, i = %s' % (len(data), keySize, blockInterval,))
+    print('l = %s, k = %s' % (len(data), keySize,))
     for i in range(keySize):
-        block = data[i::blockInterval]
-        print('block size: %d (%d)' % (len(block), keySize,))
+        block = data[i::keySize]
         keyByte, keyScore, keyResult = findXorKey(block)
         key.append(keyByte)
     return key.tobytes()
