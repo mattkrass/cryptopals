@@ -88,6 +88,10 @@ def test(a, b):
     else:
         print('\033[1;31m[ FAIL! ]\033[0;0m')
 
+def loadBase64File(filename):
+    with open(filename, 'r') as inFile:
+        return base64.b64decode(inFile.read())
+
 def getHammingDistance(bytesA, bytesB):
     if len(bytesA) != len(bytesB): return -1
     distance = 0
@@ -114,3 +118,4 @@ def breakRepeatingKeyXor(data, minKeySize=2, maxKeySize=40):
     transposedBlocks = list(itertools.zip_longest(*blocks, fillvalue=0))
     key = [(findXorKey(bytes(x))[0]) for x in transposedBlocks]
     return bytes(key)
+
