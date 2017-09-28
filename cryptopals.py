@@ -110,10 +110,7 @@ def predictKeySize(data, minSize=2, maxSize=40):
 
 def breakRepeatingKeyXor(data, minKeySize=2, maxKeySize=40):
     keySize = predictKeySize(data, minKeySize, maxKeySize)
-    key = array('B')
-    print('l = %s, k = %s' % (len(data), keySize,))
-    for i in range(keySize):
-        block = data[i::keySize]
-        keyByte, keyScore, keyResult = findXorKey(block)
-        key.append(keyByte)
-    return key.tobytes()
+    blocks = [ data[i:i+keySize] for i in range(0, len(data), keySize) ]
+    transposedBlocks = list(itertools.zip_longest(*blocks, fillvalue=0))
+    key = [(findXorKey(bytes(x))[0]) for x in transposedBlocks]
+    return bytes(key)
