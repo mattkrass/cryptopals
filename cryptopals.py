@@ -1,6 +1,7 @@
 import base64
 import itertools
 from array import array
+from Cryptodome.Cipher import AES
 
 def hexStringToBase64Bytes(hexString):
     return base64.b64encode(bytes.fromhex(hexString))
@@ -92,6 +93,10 @@ def loadBase64File(filename):
     with open(filename, 'r') as inFile:
         return base64.b64decode(inFile.read())
 
+def loadHexFile(filename):
+    with open(filename, 'r') as inFile:
+        return [bytes.fromhex(x) for x in inFile.read().split('\n')]
+
 def getHammingDistance(bytesA, bytesB):
     if len(bytesA) != len(bytesB): return -1
     distance = 0
@@ -118,4 +123,7 @@ def breakRepeatingKeyXor(data, minKeySize=2, maxKeySize=40):
     transposedBlocks = list(itertools.zip_longest(*blocks, fillvalue=0))
     key = [(findXorKey(bytes(x))[0]) for x in transposedBlocks]
     return bytes(key)
+
+def decryptAESData(data, key):
+    return AES.new(key, AES.MODE_ECB).decrypt(data)
 
