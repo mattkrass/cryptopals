@@ -127,3 +127,7 @@ def breakRepeatingKeyXor(data, minKeySize=2, maxKeySize=40):
 def decryptAESData(data, key):
     return AES.new(key, AES.MODE_ECB).decrypt(data)
 
+def pcksPad(data, blockSize=16):
+    if blockSize > 255: raise Exception('blockSize must be able to fit in a byte!')
+    padLength = blockSize - (len(data) % blockSize)
+    return data + bytes([padLength] * padLength)
