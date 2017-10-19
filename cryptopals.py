@@ -124,10 +124,36 @@ def breakRepeatingKeyXor(data, minKeySize=2, maxKeySize=40):
     key = [(findXorKey(bytes(x))[0]) for x in transposedBlocks]
     return bytes(key)
 
-def decryptAESData(data, key):
+def decryptAESDataECB(data, key):
     return AES.new(key, AES.MODE_ECB).decrypt(data)
+
+def encryptAESDataECB(data, key):
+    return AES.new(key, AES.MODE_ECB).encrypt(data)
 
 def pcksPad(data, blockSize=16):
     if blockSize > 255: raise Exception('blockSize must be able to fit in a byte!')
     padLength = blockSize - (len(data) % blockSize)
     return data + bytes([padLength] * padLength)
+
+def encryptAESDataCBC(data, key, blockSize=16):
+    aes = AES.new(key, AES.MODE_ECB)
+    if len(data) % blockSize != 0: # pad it out
+        data = pcksPad(data, blockSize)
+    blocks = [data[i:i+blockSize] for i in range(0, len(data), blockSize)] 
+    iv = bytes([ 0 ] * blockSize)
+    result = b''
+    for block in blocks:
+        iv = aes.encrypt(xorByteStrings(block, iv))
+        result += iv
+    return result
+
+def decryptAESDataCBC(data, key, blockSize=16):
+    aes = AES.new(key, AES.MODE_ECB)
+    blocks = [data[i:i+blockSize] for i in range(0, len(data), blockSize)] 
+    iv = bytes([ 0 ] * blockSize)
+    result = b''
+    for block in blocks:
+        result += xorByteStrings(aes.decrypt(block), iv)
+        iv = block
+
+    return result

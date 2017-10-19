@@ -23,4 +23,3 @@ for i in range(len(cipherdata)):
 foundCipherText = max(scores, key=lambda k: k[1])
 print('Found: %s' % (foundCipherText,))
 print('Ciphertext: %s' % (cipherdata[foundCipherText[0]],))
-print('Plaintext: %s' % (cryptopals.decryptAESData(cipherdata[foundCipherText[0]], b'YELLOW SUBMARINE'),))
