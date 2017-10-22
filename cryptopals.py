@@ -2,6 +2,7 @@ import base64
 import itertools
 from array import array
 from Cryptodome.Cipher import AES
+import random
 
 def hexStringToBase64Bytes(hexString):
     return base64.b64encode(bytes.fromhex(hexString))
@@ -127,7 +128,9 @@ def breakRepeatingKeyXor(data, minKeySize=2, maxKeySize=40):
 def decryptAESDataECB(data, key):
     return AES.new(key, AES.MODE_ECB).decrypt(data)
 
-def encryptAESDataECB(data, key):
+def encryptAESDataECB(data, key, blockSize=16):
+    if len(data) % blockSize != 0: # pad it out
+        data = pcksPad(data, blockSize)
     return AES.new(key, AES.MODE_ECB).encrypt(data)
 
 def pcksPad(data, blockSize=16):
@@ -157,3 +160,21 @@ def decryptAESDataCBC(data, key, blockSize=16):
         iv = block
 
     return result
+
+def encryptionOracle(data):
+    random.seed()
+    key = bytes([random.randint(0, 255) for x in range(16)])
+    print('Generated key = %s' % (key.hex(),))
+    useECB = random.choice([True, False])
+
+    aes = None
+    if useECB:
+        aes = AES.new(key, AES.MODE_ECB)
+    else:
+        aes = AES.new(key, AES.MODE_CBC)
+
+    return data
+
+if '__main__' == __name__:
+    print('Module self-test!')
+    encryptionOracle(b'')
