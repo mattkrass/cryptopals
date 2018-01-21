@@ -138,43 +138,53 @@ def pcksPad(data, blockSize=16):
     padLength = blockSize - (len(data) % blockSize)
     return data + bytes([padLength] * padLength)
 
-def encryptAESDataCBC(data, key, blockSize=16):
+def encryptAESDataCBC(data, key, iv, blockSize=16):
     aes = AES.new(key, AES.MODE_ECB)
     if len(data) % blockSize != 0: # pad it out
         data = pcksPad(data, blockSize)
     blocks = [data[i:i+blockSize] for i in range(0, len(data), blockSize)] 
-    iv = bytes([ 0 ] * blockSize)
     result = b''
     for block in blocks:
         iv = aes.encrypt(xorByteStrings(block, iv))
         result += iv
     return result
 
-def decryptAESDataCBC(data, key, blockSize=16):
+def decryptAESDataCBC(data, key, iv, blockSize=16):
     aes = AES.new(key, AES.MODE_ECB)
     blocks = [data[i:i+blockSize] for i in range(0, len(data), blockSize)] 
-    iv = bytes([ 0 ] * blockSize)
     result = b''
     for block in blocks:
         result += xorByteStrings(aes.decrypt(block), iv)
         iv = block
 
     return result
+def detectECB(data):
+    scores = []
+    for i in range(len(cipherdata)):
+        block = cipherdata[i]
+        subblocks = [block[i:i+16] for i in range(0, len(block), 16)]
+        pairs = list(itertools.combinations(subblocks, 2))
+        score = 0
+        for p in pairs:
+            if p[0] == p[1]:
+                score += 1
+                print('%d: score: %d' % (i, score,))
+        scores.append((i, score,))
 
+    foundCipherText = max(scores, key=lambda k: k[1])
+    
 def encryptionOracle(data):
     random.seed()
     key = bytes([random.randint(0, 255) for x in range(16)])
     print('Generated key = %s' % (key.hex(),))
-    useECB = random.choice([True, False])
+    padding = bytes([random.randint(0, 255) for x in range(random.randint(5, 10))])
+    data = padding + data + padding
 
-    aes = None
-    if useECB:
-        aes = AES.new(key, AES.MODE_ECB)
+    if True:#random.choice([True, False]):
+        return encryptAESDataECB(data, key)
     else:
-        aes = AES.new(key, AES.MODE_CBC)
-
-    return data
+        iv = bytes([random.randint(0, 255) for x in range(16)])
+        return encryptAESDataCBC(data, key, iv)
 
 if '__main__' == __name__:
-    print('Module self-test!')
-    encryptionOracle(b'')
+    pass
